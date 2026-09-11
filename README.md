@@ -4,6 +4,8 @@ A record-merge job that must land **exactly once** — even when the request is 
 
 Built for Anthropic's Software Engineering take-home, **Theme 3: Systems & Reliability**.
 
+**Live demo:** https://achalmahajan.github.io/gtm_idempotent_engine/
+
 ## The problem
 
 A "Source" record has N child "lines" that need to be merged into a "Target" record. That sounds trivial — until the transfer has to survive the failure modes every real distributed system hits:
