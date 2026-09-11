@@ -47,6 +47,16 @@ The fastest way to see the point of the tool: click through the four **Guided de
 
 You can also drive it manually with the **Chaos controls** and **Protections** toggles instead of the guided scripts.
 
+## Tests
+
+`engine.js`'s logic is covered by unit tests using Node's built-in test runner — no dependencies to install, in keeping with the rest of the project:
+
+```bash
+node --test tests/
+```
+
+They drive the engine directly (calling `_tick` instead of waiting on real timers) to verify the same invariant the guided demos show visually: dedup skipping already-applied lines, cursor-resume preventing re-application after a crash, and the lock rejecting/releasing correctly — plus the `checkIntegrity` duplicate/missing calculation itself.
+
 ## Architecture
 
 Plain HTML/CSS/JS, no framework, no backend — everything (the "distributed" job processing included) runs client-side in the browser.
