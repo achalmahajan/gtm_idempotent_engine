@@ -6,6 +6,16 @@ Built for Anthropic's Software Engineering take-home, **Theme 3: Systems & Relia
 
 **Live demo:** https://achalmahajan.github.io/gtm_idempotent_engine/
 
+## Why this problem
+
+This isn't an abstract distributed-systems exercise — it's modeled on a real pattern I've seen in production CPQ implementations: a GTM renewal workflow.
+
+To save sellers time, a system might automatically prepare a renewal by creating an opportunity, generating a quote and quote lines, configuring products, calculating pricing, and applying adjustments. From the seller's perspective this should feel like one operation, but underneath it's a sequence of dependent steps across multiple components. Any one of those steps can fail after earlier ones already succeeded — a worker crashes halfway through, a request gets retried because the caller never received a response, or two workers attempt the same renewal at the same time. Without careful reliability mechanisms, that leaves duplicate records, partial state, or a workflow that requires manual cleanup — and I've seen exactly that failure mode in a real CPQ instance, not just in theory.
+
+That directly hurts the seller experience: sellers, and the business overall, care about deal velocity — less time fixing system issues, more time with customers.
+
+This tool models that class of problem in miniature, around one invariant: every source line should appear exactly once in the final target state, even when retries, crashes, and concurrent execution occur. It intentionally strips the renewal workflow down to a single source record's lines merging into a single target record — the goal is to isolate and make visible the three failure modes and their fixes, not to model the full multi-object renewal graph (see [Extending this with more time](#extending-this-with-more-time) for how this would generalize to Contract → Opportunity/Quote).
+
 ## The problem
 
 A "Source" record has N child "lines" that need to be merged into a "Target" record. That sounds trivial — until the transfer has to survive the failure modes every real distributed system hits:
@@ -77,6 +87,7 @@ Both scripts are wrapped in IIFEs with an init guard, so they're safe even if in
 
 ## Extending this with more time
 
+- **Multiple source objects mapping to multiple target objects, with parent/child structure** — not just one source to one target. A real GTM renewal is a hierarchy: renewing *from* a Contract with Contract Lines *into* an Opportunity with Opportunity Lines, and/or a Quote with Quote Lines. The invariant would then have to hold at two levels at once — each parent object exactly once, and each child line re-parented to the *right* new parent exactly once. The exact shape of that fan-out (parallel branches vs. a sequential chain where the Quote is created from the Opportunity) is business-specific and would need verifying against the actual renewal process; see the design rationale doc for more on this.
 - Real backend with actual threads/async workers (Node or Python) instead of simulated concurrency, to demonstrate genuine races rather than scripted interleaving.
 - A "poison line" failure mode — a line that always fails validation — to demonstrate dead-lettering after N retries.
 - Persist state to IndexedDB so a demo survives a page refresh.
