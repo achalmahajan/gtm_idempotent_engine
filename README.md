@@ -52,7 +52,7 @@ The fastest way to see the point of the tool: click through the four **Guided de
 
 1. **Clean transfer** — baseline: all protections on, a transfer completes and the Integrity panel goes green.
 2. **Break it: duplicate request** — protections off, the same request fires twice, watch the Integrity panel show real duplicates (with `DUP` badges on the affected lines). Then dedup is turned back on and the identical duplicate request is repeated — it converges to the correct state even though two jobs actually ran.
-3. **Crash + resume** — a large transfer is killed mid-flight (simulated crash) and resumed. First with cursor-resume on (clean recovery), then with it off (resuming restarts from zero and duplicates everything applied before the crash — the "seller has to restart the whole process" failure mode).
+3. **Crash + resume** — a large transfer is killed mid-flight (simulated crash) and resumed. First with cursor-resume off (resuming restarts from zero and duplicates everything applied before the crash — the "seller has to restart the whole process" failure mode), then with it back on (clean recovery from the saved cursor).
 4. **Break it: concurrent race** — two transfers fired almost simultaneously with no lock, producing genuine duplicates from two independent jobs that never knew about each other. Then the lock is turned back on and the second request is rejected outright in the event log.
 
 You can also drive it manually with the **Chaos controls** and **Protections** toggles instead of the guided scripts.

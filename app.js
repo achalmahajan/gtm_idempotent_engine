@@ -259,30 +259,30 @@ async function scenarioDuplicate() {
 }
 
 async function scenarioCrash() {
-  protections.dedup = false; protections.resume = true; protections.lock = true;
+  protections.dedup = false; protections.resume = false; protections.lock = true;
   syncToggleUI();
   initDemo(21);
   engine.tickIntervalMs = 450;
-  setNarration('STEP 1/4', 'Dedup OFF (so resume has to do the work alone). Starting a large transfer, will kill it mid-flight to simulate a crashed worker...');
+  setNarration('STEP 1/4', 'Dedup OFF and cursor-resume OFF. Starting a large transfer, will kill it mid-flight to simulate a crashed worker...');
   await sleep(500);
   engine.submitTransfer();
   await sleep(1150);
   const running = engine.latestRunningJob();
   if (running) engine.killJob(running.id);
   await sleep(1300);
-  setNarration('STEP 2/4', 'Job killed mid-transfer. Its lock is still held — a crashed worker never releases its lease. Resuming from its saved cursor...');
+  setNarration('STEP 2/4', 'Job killed mid-transfer. Resuming it — with cursor-resume OFF, it restarts from zero...');
   const killed = engine.latestKilledJob();
   if (killed) engine.resumeJob(killed.id);
   await waitForAllJobsSettled();
-  setNarration('STEP 3/4', 'Resumed cleanly with zero duplicates — even without dedup, cursor-resume alone prevented re-sending already-applied lines.');
-  await sleep(3000);
+  setNarration('STEP 3/4', 'Look at the Integrity panel — <b>corrupted</b>. Every line applied before the crash got duplicated. This is the "weird state, seller has to restart the whole process" failure mode.');
+  await sleep(3200);
 
-  protections.resume = false;
+  protections.resume = true;
   syncToggleUI();
   store.target = makeTarget();
   store.jobs = new Map();
   render();
-  setNarration('STEP 4/4', 'Same crash, but with cursor-resume turned OFF this time...');
+  setNarration('STEP 4/4', 'Turning cursor-resume <b>back ON</b> and replaying the exact same crash...');
   await sleep(500);
   engine.submitTransfer();
   await sleep(1150);
@@ -292,7 +292,7 @@ async function scenarioCrash() {
   const killed2 = engine.latestKilledJob();
   if (killed2) engine.resumeJob(killed2.id);
   await waitForAllJobsSettled();
-  setNarration('DONE', 'Resume restarted from cursor 0 — every line applied before the crash got duplicated. This is the "weird state, seller has to restart the whole process" failure mode.');
+  setNarration('DONE', 'Resumed cleanly with zero duplicates — even without dedup, cursor-resume alone prevented re-sending already-applied lines.');
 }
 
 async function scenarioRace() {
